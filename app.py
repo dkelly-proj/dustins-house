@@ -18,5 +18,5 @@ server = app.server
 
 app.layout = html.Div([html.H1(children="Collecting Data Since " + str(min_time), className="hello")])
 
-#if __name__ == '__main__':
-#    app.run_server(debug=True)
+if __name__ == '__main__':
+   app.run_server(debug=True)
