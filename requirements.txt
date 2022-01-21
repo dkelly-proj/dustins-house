@@ -40,7 +40,6 @@ pure-eval==0.2.1
 Pygments==2.11.2
 python-dateutil==2.8.2
 pytz==2021.3
-pywin32==303
 pyzmq==22.3.0
 six==1.16.0
 SQLAlchemy==1.4.30
