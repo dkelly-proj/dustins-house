@@ -3,7 +3,7 @@ import dash
 from dash import html, dcc
 from datetime import datetime
 from sqlalchemy import create_engine
-from config import pgs
+#from config import pgs
 import pandas as pd
 
 # get minimum time
