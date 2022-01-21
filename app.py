@@ -5,8 +5,10 @@ from datetime import datetime
 from sqlalchemy import create_engine
 #from config import pgs
 import pandas as pd
+import os
 
 # get minimum time
+pgs = os.environ['pgs']
 engine = create_engine(pgs)
 
 min_time = (pd.read_sql('Select min(date) from "dkelly-proj/cbus_temps"."temp_log";',
