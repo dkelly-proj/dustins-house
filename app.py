@@ -44,19 +44,19 @@ app = dash.Dash(external_stylesheets = [dbc.themes.DARKLY])
 # Navbar
 navbar = dbc.NavbarSimple(
     children=[
-        dbc.NavItem(dbc.NavLink("App GitHub", href="https://github.com/dkelly-proj/dustins-house")),
+        dbc.NavItem(dbc.NavLink("Dashboard GitHub", href="https://github.com/dkelly-proj/dustins-house")),
         dbc.DropdownMenu(
             children=[
                 dbc.DropdownMenuItem("More Links", header=True),
-                dbc.DropdownMenuItem("App Database", href="https://bit.io/dkelly-proj/cbus_temps"),
+                dbc.DropdownMenuItem("Dashboard Database", href="https://bit.io/dkelly-proj/cbus_temps"),
                 dbc.DropdownMenuItem("Temperature GitHub", href="https://github.com/dkelly-proj/temp-log"),
             ],
             nav=True,
             in_navbar=True,
-            label="More",
+            label="More Links",
         ),
     ],
-    brand="Dustin's LinkedIn",
+    brand="Visit Dustin's LinkedIn",
     brand_href="https://www.linkedin.com/in/dustin-l-kelly/",
     color="primary",
     dark=True,
@@ -73,11 +73,42 @@ app.layout = html.Div([
                             align = "end", justify = "center", style = {"margin-top": "2rem", "margin-bottom": "2rem"}),
                     dbc.Row(
                         dbc.Col([
-                            html.H4(children="Average Daily Temperature at Dustin's House"),
-                            dcc.Graph(figure = fig),
-                            html.H3(children = "Records"),
-                            html.H4(children="Collecting Data Since " + str(min_time), className="hello"),
-                            html.H4(children = "Low Record is " + str(record_low['temp'][0]) + " from " + str(record_low['date'][0]))]))])])
+                            html.H4(children="Average Daily Temperature at Dustin's House")])),
+                    dbc.Row(
+                        dbc.Col([
+                            dcc.Graph(figure = fig)])),
+                    dbc.Row(
+                        dbc.Col([
+                            html.H3(children = "Records")], width = "auto"), justify = "center", style = {"margin-top": "5rem"}),
+                    dbc.Row(
+                        dbc.Col([
+                            html.H6(children="Collecting Data Since " + str(min_time), className="hello")], width = "auto"), justify = "center", style = {"margin-bottom": "2rem"}),
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Card([
+                                dbc.CardHeader("Lowest Temperature"),
+                                dbc.CardBody(
+                                    html.H2(str(record_low['temp'][0]) + "°F", className = "text-center")),
+                                dbc.CardFooter(str(record_low['date'][0].strftime('%B %d, %Y')))], color = "info")], width = 3),
+                        dbc.Col([
+                            dbc.Card([
+                                dbc.CardHeader("Highest Temperature"),
+                                dbc.CardBody(
+                                    html.H2(str(record_high['temp'][0]) + "°F", className = "text-center")),
+                                dbc.CardFooter(str(record_high['date'][0].strftime('%B %d, %Y')))], color = "danger")], width = 3)], justify = "center"),
+                    dbc.Row(
+                        dbc.Col(
+                            html.H3(children = "How it Works"), width = "auto"), justify = "center", style = {"margin-top": "5rem"}),
+                    dbc.Row(
+                        dbc.Col(
+                            dbc.Accordion([
+                                dbc.AccordionItem("Every 15 minutes a Linux server in Dustin's basement requests the current temperature for his zip code from a weather service API",
+                                                  title = "1 - Linux server requests temperature"),
+                                dbc.AccordionItem("The current temperature, once retrieved, is timestamped and written to a POSTGRESQL database on Bit.io",
+                                                  title = "2 - Linux server stores temperature on Bit.io"),
+                                dbc.AccordionItem("Every 30 minutes Heroku refreshes this dashboard to display the latest data for all measurements and visualizations",
+                                                  title = "3 - Heroku queries and displays data")]), width = 8), justify = "center", style = {"margin-bottom": "20rem"})])])
+
 
 if __name__ == '__main__':
    app.run_server(debug=True)
