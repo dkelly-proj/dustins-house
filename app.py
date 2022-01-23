@@ -7,7 +7,7 @@ import dash_bootstrap_components as dbc
 
 ## Helpers
 import queries
-#from config import pgs
+from config import pgs
 
 ## Standard
 from datetime import datetime
@@ -16,7 +16,7 @@ import pandas as pd
 import os
 
 # Get Data
-pgs = os.environ['pgs']
+#pgs = os.environ['pgs']
 engine = create_engine(pgs)
 
 ## Current Temp
@@ -34,12 +34,49 @@ record_low = pd.read_sql(queries.low, con = engine)
 ## Record High
 record_high = pd.read_sql(queries.high, con = engine)
 
-## Graph
-fig = go.Figure()
-fig.add_trace(go.Scatter(x = df_daily['date'], y = df_daily['temp']))
+## Daily Highs and Lows
+df_hl = pd.read_sql(queries.daily_hl, con = engine)
+
+## Last Week
+df_wk = pd.read_sql(queries.weekly, con = engine)
+
+## Daily Average Graph
+daily_fig = go.Figure()
+daily_fig.add_trace(go.Scatter(x = df_daily['date'], y = df_daily['temp'],
+                               line=dict(color='rgba(56,250,251,1)', width=2)))
+
+daily_fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white',
+                        showlegend = False, title_text = 'Average Daily Temperature',
+                        xaxis=dict(rangeslider=dict(visible = True), type = "date", showgrid = False),
+                        yaxis=dict(gridcolor = '#444444'),
+                        yaxis_title = "Temperature in °F")
+
+## Daily Highs and Lows
+hl_fig = go.Figure()
+hl_fig.add_trace(go.Scatter(x = df_hl['min'], y = df_hl['max'], mode = "markers",
+                            marker=dict(color='rgba(56,250,251,1)')))
+
+hl_fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white',
+                        showlegend = False, title_text = 'Daily Highs and Lows',
+                        yaxis_title = "Maximum Temperature in °F",
+                        xaxis_title = "Minimum Temperature in °F",
+                        yaxis = dict(gridcolor = '#444444'),
+                        xaxis = dict(gridcolor = '#444444'))
+
+## Last Seven Days
+wk_fig = go.Figure()
+wk_fig.add_trace(go.Scatter(x = df_wk['date'], y = df_wk['temp'],
+                               line=dict(color='rgba(56,250,251,1)', width=2)))
+
+wk_fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white',
+                        showlegend = False, title_text = 'Last Seven Days',
+                        xaxis=dict(rangeslider=dict(visible = True), type = "date", showgrid = False),
+                        yaxis=dict(gridcolor = '#444444'),
+                        yaxis_title = "Temperature in °F")
+
 
 app = dash.Dash(external_stylesheets = [dbc.themes.DARKLY])
-server = app.server
+#server = app.server
 
 # Navbar
 navbar = dbc.NavbarSimple(
@@ -68,15 +105,19 @@ app.layout = html.Div([
                 dbc.Container([
                     dbc.Row(
                         dbc.Col(
-                            html.H3(children = "The Current Temperature at Dustin's House is " + str(cur_temp) + "°F"),
+                            html.H3(children = "Dustin's Temperature Dashboard"),
                             width = "auto"),
-                            align = "end", justify = "center", style = {"margin-top": "2rem", "margin-bottom": "2rem"}),
+                            align = "end", justify = "center", style = {"margin-top": "4rem", "margin-bottom": "2rem"}),
                     dbc.Row(
                         dbc.Col([
-                            html.H4(children="Average Daily Temperature at Dustin's House")])),
+                            html.H5(children="The Current Temperature at Dustin's House is " + str(cur_temp) + "°F"),
+                            html.P('Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Malesuada proin libero nunc consequat interdum varius. Felis eget velit aliquet sagittis id consectetur. Elementum nibh tellus molestie nunc non blandit. Fringilla ut morbi tincidunt augue interdum. Ut tortor pretium viverra suspendisse potenti nullam ac tortor vitae. Nec dui nunc mattis enim ut tellus elementum sagittis vitae. Diam donec adipiscing tristique risus. Ac turpis egestas integer eget aliquet nibh. Sit amet est placerat in egestas.')]), style = {"margin-bottom": "2rem"}),
                     dbc.Row(
-                        dbc.Col([
-                            dcc.Graph(figure = fig)])),
+                        dbc.Col(
+                            dbc.Tabs([
+                                dbc.Tab(dcc.Graph(figure = daily_fig), label = 'Average Daily Temp'),
+                                dbc.Tab(dcc.Graph(figure = hl_fig), label = "Daily Highs and Lows"),
+                                dbc.Tab(dcc.Graph(figure = wk_fig), label = "Last Seven Days")]))),
                     dbc.Row(
                         dbc.Col([
                             html.H3(children = "Records")], width = "auto"), justify = "center", style = {"margin-top": "5rem"}),
