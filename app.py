@@ -7,7 +7,7 @@ import dash_bootstrap_components as dbc
 
 ## Helpers
 import queries
-from config import pgs
+#from config import pgs
 
 ## Standard
 from datetime import datetime
@@ -16,7 +16,7 @@ import pandas as pd
 import os
 
 # Get Data
-#pgs = os.environ['pgs']
+pgs = os.environ['pgs']
 engine = create_engine(pgs)
 
 ## Current Temp
@@ -76,7 +76,7 @@ wk_fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)'
 
 
 app = dash.Dash(external_stylesheets = [dbc.themes.DARKLY])
-#server = app.server
+server = app.server
 
 # Navbar
 navbar = dbc.NavbarSimple(
