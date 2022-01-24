@@ -8,7 +8,7 @@ import dash_bootstrap_components as dbc
 
 ## Helpers
 import queries
-from config import pgs
+#from config import pgs
 
 ## Standard
 from datetime import datetime
@@ -17,13 +17,13 @@ import pandas as pd
 import os
 
 # Get Data
-#pgs = os.environ['pgs']
+pgs = os.environ['pgs']
 engine = create_engine(pgs)
 
 # Application
 app = dash.Dash(external_stylesheets = [dbc.themes.DARKLY])
 app.title = "Dustin's Temperature Dashboard"
-#server = app.server
+server = app.server
 
 # Navbar
 navbar = dbc.NavbarSimple(
