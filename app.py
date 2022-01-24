@@ -60,7 +60,7 @@ app.layout = html.Div([
                             html.H5(id = 'current-temp'),
                             html.P("Welcome to Dustin's Temperature Dashboard! Click the tabs below to view customized, interactive visualizations of the temperature outside " +
                                    "of Dustin's house in Columbus, Ohio. This dashboard was created with Python, SQL, Git, and a few other languages. Links to the source code " +
-                                   "and data are available in the upper right-hand corner. The dashboard will refresh every 20 minutes to fetch the latest data.")]),
+                                   "and data are available in the upper right-hand corner. The dashboard will refresh every 5 minutes to fetch the latest data.")]),
                                    style = {"margin-bottom": "2rem"}),
                     dbc.Row(
                         dbc.Col(
@@ -93,13 +93,13 @@ app.layout = html.Div([
                     dbc.Row(
                         dbc.Col(
                             dbc.Accordion([
-                                dbc.AccordionItem("Every 15 minutes a Linux server in Dustin's basement requests the current temperature for his zip code from a weather service API",
-                                                  title = "1 - Linux server requests temperature"),
-                                dbc.AccordionItem("The current temperature, once retrieved, is timestamped and written to a POSTGRESQL database on Bit.io",
-                                                  title = "2 - Linux server stores temperature on Bit.io"),
-                                dbc.AccordionItem("Every 20 minutes Heroku refreshes this dashboard to display the latest data for all measurements and visualizations",
-                                                  title = "3 - Heroku queries and displays data")]), width = 8), justify = "center", style = {"margin-bottom": "20rem"})]),
-                dcc.Interval(id = 'interval-component', interval = 1200 * 1000, n_intervals = 0)])
+                                dbc.AccordionItem("Every 15 minutes a Linux server in Dustin's basement requests the current temperature for his zip code from a weather service API. The request is sent via Python script and scheduled with crontab.",
+                                                  title = "1 - Current temperature is requested"),
+                                dbc.AccordionItem("The current temperature, once retrieved, is timestamped and written to a PostgreSQL database. The same Python script that makes the API request also writes the temperature to the database hosted on Bit.io.",
+                                                  title = "2 - Temperature is stored in database"),
+                                dbc.AccordionItem("Every 5 minutes Heroku refreshes this dashboard to display the latest data for all measurements and visualizations. The dashboard itself is built in Python using Dash and Plotly, all database queries are written in SQL.",
+                                                  title = "3 - Temperature data is queried and displayed in dashboard")]), width = 8), justify = "center", style = {"margin-bottom": "20rem"})]),
+                dcc.Interval(id = 'interval-component', interval = 300 * 1000, n_intervals = 0)])
 
 # Live Updates
 ## Daily Average Figure
