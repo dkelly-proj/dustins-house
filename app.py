@@ -29,23 +29,7 @@ record_low = pd.read_sql(queries.low, con = engine)
 ## Record High
 record_high = pd.read_sql(queries.high, con = engine)
 
-## Last Week
-df_wk = pd.read_sql(queries.weekly, con = engine)
-
-## Last Seven Days
-wk_fig = go.Figure()
-wk_fig.add_trace(go.Scatter(x = df_wk['date'], y = df_wk['temp'],
-                               line=dict(color='rgba(56,250,251,1)', width=2),
-                               text = [item.strftime('%b %d, %Y %H:%M%p') for item in df_wk['date']],
-                               hovertemplate = '''Date and Time: %{text}<br>Temp: %{y:.2f}°F<extra></extra>'''))
-
-wk_fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white',
-                        showlegend = False, title_text = 'Last Seven Days',
-                        xaxis=dict(rangeslider=dict(visible = True), type = "date", showgrid = False),
-                        yaxis=dict(gridcolor = '#444444'),
-                        yaxis_title = "Temperature in °F")
-
-
+# Application
 app = dash.Dash(external_stylesheets = [dbc.themes.DARKLY])
 app.title = "Dustin's Temperature Dashboard"
 #server = app.server
@@ -92,7 +76,7 @@ app.layout = html.Div([
                             dbc.Tabs([
                                 dbc.Tab(dcc.Graph(id = 'daily-figure'), label = 'Average Daily Temp'),
                                 dbc.Tab(dcc.Graph(id = 'high-low-figure'), label = "Daily Highs and Lows"),
-                                dbc.Tab(dcc.Graph(figure = wk_fig, id = 'weekly-figure'), label = "Last Seven Days")]))),
+                                dbc.Tab(dcc.Graph(id = 'weekly-figure'), label = "Last Seven Days")]))),
                     dbc.Row(
                         dbc.Col([
                             html.H3(children = "Records")], width = "auto"), justify = "center", style = {"margin-top": "2rem"}),
@@ -171,7 +155,27 @@ def update_daily_high_low(n):
 
     return hl_fig
 
+# Last Week Figure
+@app.callback(Output('weekly-figure', 'figure'),
+              Input('interval-component', 'n_intervals'))
+def update_weekly(n):
+    # Collect Data
+    df_wk = pd.read_sql(queries.weekly, con = engine)
 
+    # Build Figure
+    wk_fig = go.Figure()
+    wk_fig.add_trace(go.Scatter(x = df_wk['date'], y = df_wk['temp'],
+                                   line=dict(color='rgba(56,250,251,1)', width=2),
+                                   text = [item.strftime('%b %d, %Y %H:%M%p') for item in df_wk['date']],
+                                   hovertemplate = '''Date and Time: %{text}<br>Temp: %{y:.2f}°F<extra></extra>'''))
+
+    wk_fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white',
+                            showlegend = False, title_text = 'Last Seven Days',
+                            xaxis=dict(rangeslider=dict(visible = True), type = "date", showgrid = False),
+                            yaxis=dict(gridcolor = '#444444'),
+                            yaxis_title = "Temperature in °F")
+
+    return wk_fig
 
 
 
