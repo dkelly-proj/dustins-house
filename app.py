@@ -20,15 +20,6 @@ import os
 #pgs = os.environ['pgs']
 engine = create_engine(pgs)
 
-## Current Temp
-cur_temp = pd.read_sql(queries.current_temp, con = engine, parse_dates = 'date')['temp'][0]
-
-## Record Low
-record_low = pd.read_sql(queries.low, con = engine)
-
-## Record High
-record_high = pd.read_sql(queries.high, con = engine)
-
 # Application
 app = dash.Dash(external_stylesheets = [dbc.themes.DARKLY])
 app.title = "Dustin's Temperature Dashboard"
@@ -66,7 +57,7 @@ app.layout = html.Div([
                             align = "end", justify = "center", style = {"margin-top": "4rem", "margin-bottom": "2rem"}),
                     dbc.Row(
                         dbc.Col([
-                            html.H5(children="The Current Temperature at Dustin's House is " + str(cur_temp) + "°F"),
+                            html.H5(id = 'current-temp'),
                             html.P("Welcome to Dustin's Temperature Dashboard! Click the tabs below to view customized, interactive visualizations of the temperature outside " +
                                    "of Dustin's house in Columbus, Ohio. This dashboard was created with Python, SQL, Git, and a few other languages. Links to the source code " +
                                    "and data are available in the upper right-hand corner. The dashboard will refresh every 20 minutes to fetch the latest data.")]),
@@ -88,14 +79,14 @@ app.layout = html.Div([
                             dbc.Card([
                                 dbc.CardHeader("Lowest Temperature"),
                                 dbc.CardBody(
-                                    html.H2(str(record_low['temp'][0]) + "°F", className = "text-center")),
-                                dbc.CardFooter(str(record_low['date'][0].strftime('%B %d, %Y')))], color = "info")], width = 3),
+                                    html.H2(id = 'low-temp', className = "text-center")),
+                                dbc.CardFooter(id = 'low-temp-date')], color = "info")], width = 3),
                         dbc.Col([
                             dbc.Card([
                                 dbc.CardHeader("Highest Temperature"),
                                 dbc.CardBody(
-                                    html.H2(str(record_high['temp'][0]) + "°F", className = "text-center")),
-                                dbc.CardFooter(str(record_high['date'][0].strftime('%B %d, %Y')))], color = "danger")], width = 3)], justify = "center"),
+                                    html.H2(id = 'high-temp', className = "text-center")),
+                                dbc.CardFooter(id = 'high-temp-date')], color = "danger")], width = 3)], justify = "center"),
                     dbc.Row(
                         dbc.Col(
                             html.H3(children = "How it Works"), width = "auto"), justify = "center", style = {"margin-top": "5rem"}),
@@ -110,14 +101,15 @@ app.layout = html.Div([
                                                   title = "3 - Heroku queries and displays data")]), width = 8), justify = "center", style = {"margin-bottom": "20rem"})]),
                 dcc.Interval(id = 'interval-component', interval = 1200 * 1000, n_intervals = 0)])
 
-# Daily Average Figure
+# Live Updates
+## Daily Average Figure
 @app.callback(Output('daily-figure', 'figure'),
               Input('interval-component', 'n_intervals'))
 def update_daily_averages(n):
-    # Collect data
+    ### Collect data
     df_daily = pd.read_sql(queries.daily, con = engine, parse_dates = 'date').sort_values('date')
 
-    # Build figure
+    ### Build figure
     daily_fig = go.Figure()
     daily_fig.add_trace(go.Scatter(x = df_daily['date'], y = df_daily['temp'],
                                    line=dict(color='rgba(56,250,251,1)', width=2),
@@ -132,14 +124,14 @@ def update_daily_averages(n):
 
     return daily_fig
 
-# Daily High Low Figure
+## Daily High Low Figure
 @app.callback(Output('high-low-figure', 'figure'),
               Input('interval-component', 'n_intervals'))
 def update_daily_high_low(n):
-    # Collect Data
+    ### Collect Data
     df_hl = pd.read_sql(queries.daily_hl, con = engine)
 
-    # Build figure
+    ### Build figure
     hl_fig = go.Figure()
     hl_fig.add_trace(go.Scatter(x = df_hl['min'], y = df_hl['max'], mode = "markers",
                                 marker=dict(color='rgba(56,250,251,1)'),
@@ -155,14 +147,14 @@ def update_daily_high_low(n):
 
     return hl_fig
 
-# Last Week Figure
+## Last Week Figure
 @app.callback(Output('weekly-figure', 'figure'),
               Input('interval-component', 'n_intervals'))
 def update_weekly(n):
-    # Collect Data
+    ### Collect Data
     df_wk = pd.read_sql(queries.weekly, con = engine)
 
-    # Build Figure
+    ### Build Figure
     wk_fig = go.Figure()
     wk_fig.add_trace(go.Scatter(x = df_wk['date'], y = df_wk['temp'],
                                    line=dict(color='rgba(56,250,251,1)', width=2),
@@ -177,9 +169,42 @@ def update_weekly(n):
 
     return wk_fig
 
+## Current Temperature
+@app.callback(Output('current-temp', 'children'),
+              Input('interval-component', 'n_intervals'))
+def update_current_temp(n):
+    ### Get Data
+    cur_temp = pd.read_sql(queries.current_temp, con = engine, parse_dates = 'date')['temp'][0]
 
+    return "The Current Temperature at Dustin's House is " + str(cur_temp) + "°F"
 
+## Record Low
+@app.callback(Output('low-temp', 'children'),
+              Output('low-temp-date', 'children'),
+              Input('interval-component', 'n_intervals'))
+def update_record_low(n):
+    ### Get Data
+    record_low = pd.read_sql(queries.low, con = engine)
 
+    ### Transform
+    rl_temp = str(record_low['temp'][0]) + "°F"
+    rl_date = str(record_low['date'][0].strftime('%B %d, %Y'))
+
+    return rl_temp, rl_date
+
+## Record High
+@app.callback(Output('high-temp', 'children'),
+              Output('high-temp-date', 'children'),
+              Input('interval-component', 'n_intervals'))
+def update_record_high(n):
+    ### Get Data
+    record_high = pd.read_sql(queries.high, con = engine)
+
+    ### Transform
+    rh_temp = str(record_high['temp'][0]) + "°F"
+    rh_date = str(record_high['date'][0].strftime('%B %d, %Y'))
+
+    return rh_temp, rh_date
 
 
 if __name__ == '__main__':
