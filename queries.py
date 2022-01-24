@@ -9,12 +9,6 @@ WHERE date = (
     FROM "dkelly-proj/cbus_temps"."temp_log");
 '''
 
-# Earliest Data
-min_date = '''
-SELECT min(date)
-FROM "dkelly-proj/cbus_temps"."temp_log";
-'''
-
 # Daily Averages
 daily = '''
 Select date_trunc('day', date) "date", avg(temp) "temp"

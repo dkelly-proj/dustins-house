@@ -23,34 +23,14 @@ engine = create_engine(pgs)
 ## Current Temp
 cur_temp = pd.read_sql(queries.current_temp, con = engine, parse_dates = 'date')['temp'][0]
 
-## Earliest Data
-min_time = pd.read_sql(queries.min_date, con = engine, parse_dates = 'date')['min'][0].strftime('%B %d, %Y')
-
 ## Record Low
 record_low = pd.read_sql(queries.low, con = engine)
 
 ## Record High
 record_high = pd.read_sql(queries.high, con = engine)
 
-## Daily Highs and Lows
-df_hl = pd.read_sql(queries.daily_hl, con = engine)
-
 ## Last Week
 df_wk = pd.read_sql(queries.weekly, con = engine)
-
-## Daily Highs and Lows
-hl_fig = go.Figure()
-hl_fig.add_trace(go.Scatter(x = df_hl['min'], y = df_hl['max'], mode = "markers",
-                            marker=dict(color='rgba(56,250,251,1)'),
-                            text = [item.strftime('%b %d, %Y') for item in df_hl['date']],
-                            hovertemplate = '''Date: %{text}<br>Max: %{y:.2f}°F<br>Min: %{x:.2f}°F<extra></extra>'''))
-
-hl_fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white',
-                        showlegend = False, title_text = 'Daily Highs and Lows',
-                        yaxis_title = "Maximum Temperature in °F",
-                        xaxis_title = "Minimum Temperature in °F",
-                        yaxis = dict(gridcolor = '#444444'),
-                        xaxis = dict(gridcolor = '#444444'))
 
 ## Last Seven Days
 wk_fig = go.Figure()
@@ -111,14 +91,14 @@ app.layout = html.Div([
                         dbc.Col(
                             dbc.Tabs([
                                 dbc.Tab(dcc.Graph(id = 'daily-figure'), label = 'Average Daily Temp'),
-                                dbc.Tab(dcc.Graph(figure = hl_fig, id = 'high-low-figure'), label = "Daily Highs and Lows"),
+                                dbc.Tab(dcc.Graph(id = 'high-low-figure'), label = "Daily Highs and Lows"),
                                 dbc.Tab(dcc.Graph(figure = wk_fig, id = 'weekly-figure'), label = "Last Seven Days")]))),
                     dbc.Row(
                         dbc.Col([
                             html.H3(children = "Records")], width = "auto"), justify = "center", style = {"margin-top": "2rem"}),
                     dbc.Row(
                         dbc.Col([
-                            html.H6(children="Collecting Data Since " + str(min_time), className="hello")], width = "auto"), justify = "center", style = {"margin-bottom": "2rem"}),
+                            html.H6(children="Collecting Data Since September 29, 2021", className="hello")], width = "auto"), justify = "center", style = {"margin-bottom": "2rem"}),
                     dbc.Row([
                         dbc.Col([
                             dbc.Card([
@@ -167,6 +147,35 @@ def update_daily_averages(n):
                             yaxis_title = "Temperature in °F")
 
     return daily_fig
+
+# Daily High Low Figure
+@app.callback(Output('high-low-figure', 'figure'),
+              Input('interval-component', 'n_intervals'))
+def update_daily_high_low(n):
+    # Collect Data
+    df_hl = pd.read_sql(queries.daily_hl, con = engine)
+
+    # Build figure
+    hl_fig = go.Figure()
+    hl_fig.add_trace(go.Scatter(x = df_hl['min'], y = df_hl['max'], mode = "markers",
+                                marker=dict(color='rgba(56,250,251,1)'),
+                                text = [item.strftime('%b %d, %Y') for item in df_hl['date']],
+                                hovertemplate = '''Date: %{text}<br>Max: %{y:.2f}°F<br>Min: %{x:.2f}°F<extra></extra>'''))
+
+    hl_fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white',
+                            showlegend = False, title_text = 'Daily Highs and Lows',
+                            yaxis_title = "Maximum Temperature in °F",
+                            xaxis_title = "Minimum Temperature in °F",
+                            yaxis = dict(gridcolor = '#444444'),
+                            xaxis = dict(gridcolor = '#444444'))
+
+    return hl_fig
+
+
+
+
+
+
 
 
 if __name__ == '__main__':
