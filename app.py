@@ -8,7 +8,7 @@ import dash_bootstrap_components as dbc
 
 ## Helpers
 import queries
-#from config import pgs
+from config import pgs
 
 ## Standard
 from datetime import datetime
@@ -17,13 +17,13 @@ import pandas as pd
 import os
 
 # Get Data
-pgs = os.environ['pgs']
+#pgs = os.environ['pgs']
 engine = create_engine(pgs)
 
 # Application
 app = dash.Dash(external_stylesheets = [dbc.themes.DARKLY])
 app.title = "Dustin's Temperature Dashboard"
-server = app.server
+#server = app.server
 
 # Navbar
 navbar = dbc.NavbarSimple(
@@ -176,7 +176,7 @@ def update_current_temp(n):
     ### Get Data
     cur_temp = pd.read_sql(queries.current_temp, con = engine, parse_dates = 'date')['temp'][0]
 
-    return "The Current Temperature at Dustin's House is " + str(cur_temp) + "°F"
+    return "The Current Temperature at Dustin's House is {0:.1f}°F".format(cur_temp)
 
 ## Record Low
 @app.callback(Output('low-temp', 'children'),
@@ -187,7 +187,7 @@ def update_record_low(n):
     record_low = pd.read_sql(queries.low, con = engine)
 
     ### Transform
-    rl_temp = str(record_low['temp'][0]) + "°F"
+    rl_temp = "{0:.1f}°F".format(record_low['temp'][0])
     rl_date = str(record_low['date'][0].strftime('%B %d, %Y'))
 
     return rl_temp, rl_date
@@ -201,7 +201,7 @@ def update_record_high(n):
     record_high = pd.read_sql(queries.high, con = engine)
 
     ### Transform
-    rh_temp = str(record_high['temp'][0]) + "°F"
+    rh_temp = "{0:.1f}°F".format(record_high['temp'][0])
     rh_date = str(record_high['date'][0].strftime('%B %d, %Y'))
 
     return rh_temp, rh_date
