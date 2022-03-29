@@ -6,6 +6,10 @@ from dash.dependencies import Input, Output
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 
+## Clustering
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+
 ## Helpers
 import queries
 from config import pgs
@@ -87,6 +91,20 @@ app.layout = html.Div([
                                 dbc.CardBody(
                                     html.H2(id = 'high-temp', className = "text-center")),
                                 dbc.CardFooter(id = 'high-temp-date')], color = "danger")], width = 3)], justify = "center"),
+                    dbc.Row(
+                        dbc.Col(
+                            html.H3(children = "Humidity Data"), width = "auto"), justify = "center", style = {"margin-top": "5rem"}),
+                    dbc.Row(
+                        dbc.Col(
+                            html.P("While building this dashboard, with admittedly zero meteorological knowledge, Dustin noticed that the temperature seemed to " +
+                                   "fluctuate less on days with precipitation. Dustin has a hypothesis that humidity could be a proxy for precipitation, and that " +
+                                   "days with higher average humidity should also have a lower standard deviation of temperatures. At the end of January 2022 Dustin " +
+                                   "began collecting humidity data along with temperature data, and now plans to add visuals and tests to eventually reject or fail to " +
+                                   "reject the hypothesis stated above."), width = "auto"), justify = "center"),
+                    dbc.Row(
+                        dbc.Col(
+                            dbc.Tabs([
+                                dbc.Tab(dcc.Graph(id = 'hum-cluster-figure'), label = 'Humidity and Temperature Clustering')]))),
                     dbc.Row(
                         dbc.Col(
                             html.H3(children = "How it Works"), width = "auto"), justify = "center", style = {"margin-top": "5rem"}),
@@ -206,6 +224,40 @@ def update_record_high(n):
 
     return rh_temp, rh_date
 
+## Humidity Clustering
+@app.callback(Output('hum-cluster-figure', 'figure'),
+              Input('interval-component', 'n_intervals'))
+def update_hum_cluster(n):
+    ### Get Data
+    df = (pd.read_sql(queries.hum_cluster, con = engine, parse_dates = 'date')
+            .assign(ah_scaled = lambda x: StandardScaler().fit_transform(x.avg_humidity.array.reshape(-1,1)),
+                    st_scaled = lambda x: StandardScaler().fit_transform(x.std_temp.array.reshape(-1,1)),
+                    cluster = lambda x: KMeans(3).fit_predict(x[['ah_scaled','st_scaled']])))
+
+    ### Build figure
+    clusters = df.cluster.sort_values().unique()
+    colors = ['rgba(56,250,251,1)', 'rgba(247,168,1,1)','rgba(0,255,117,1)']
+    hovertemp = '''Date: %{text}<br>Avg Humidity: %{x:.2f}%<br>Std Dev of Temp: %{y:.2f}°F<extra></extra>'''
+
+    hum_fig = go.Figure()
+
+    for cluster in clusters:
+        hum_fig.add_trace(go.Scatter(x = df.loc[df.cluster == cluster]['avg_humidity'],
+                                     y = df.loc[df.cluster == cluster]['std_temp'],
+                                     mode = "markers",
+                                     name = str('Cluster '+ str(cluster)),
+                                     text = [item.strftime('%b %d, %Y') for item in df.loc[df.cluster == cluster]['date']],
+                                     hovertemplate = hovertemp,
+                                     marker = {'color': colors[cluster]}))
+
+    hum_fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white',
+                          showlegend = True, title_text = 'Humidity and Variation in Temperature',
+                          yaxis_title = "Standard Deviation of Temperature in °F",
+                          xaxis_title = "Average Humidity in %",
+                          yaxis = dict(gridcolor = '#444444'),
+                          xaxis = dict(gridcolor = '#444444'))
+
+    return hum_fig
 
 if __name__ == '__main__':
    app.run_server(debug=True)

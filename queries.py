@@ -50,3 +50,8 @@ from "dkelly-proj/cbus_temps"."temp_log"
 where "date" >= date('{}')
 order by 1;
 '''.format((datetime.today() - timedelta(days = 7)).strftime('%Y-%m-%d'))
+
+# Humidity Clustering
+hum_cluster = '''
+SELECT * FROM "dkelly-proj/cbus_temps"."humidity-temps";
+'''
