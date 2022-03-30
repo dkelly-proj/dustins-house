@@ -11,10 +11,17 @@ WHERE date = (
 
 # Daily Averages
 daily = '''
-Select date_trunc('day', date) "date", avg(temp) "temp"
-from "dkelly-proj/cbus_temps"."temp_log"
-group by 1
-order by 1;
+WITH avg_temp_tbl AS (
+  SELECT date_trunc('day', date) "date", avg(temp) "temp"
+  FROM "dkelly-proj/cbus_temps"."temp_log"
+  GROUP BY 1
+  ORDER BY 1)
+SELECT
+  date, temp,
+  avg(temp)
+  over(order by date rows between 9 preceding and current row)
+  as moving_avg
+FROM avg_temp_tbl;
 '''
 
 # Record Low

@@ -69,9 +69,9 @@ app.layout = html.Div([
                     dbc.Row(
                         dbc.Col(
                             dbc.Tabs([
-                                dbc.Tab(dcc.Graph(id = 'daily-figure', style = {'height': '60vh'}), label = 'Average Daily Temp'),
-                                dbc.Tab(dcc.Graph(id = 'high-low-figure', style = {'height': '60vh'}), label = "Daily Highs and Lows"),
-                                dbc.Tab(dcc.Graph(id = 'weekly-figure', style = {'height': '60vh'}), label = "Last Seven Days")]))),
+                                dbc.Tab(dcc.Graph(id = 'daily-figure', style = {'height': '50vh'}), label = 'Average Daily Temp'),
+                                dbc.Tab(dcc.Graph(id = 'high-low-figure', style = {'height': '50vh'}), label = "Daily Highs and Lows"),
+                                dbc.Tab(dcc.Graph(id = 'weekly-figure', style = {'height': '50vh'}), label = "Last Seven Days")]))),
                     dbc.Row(
                         dbc.Col([
                             html.H3(children = "Records")], width = "auto"), justify = "center", style = {"margin-top": "2rem"}),
@@ -104,7 +104,7 @@ app.layout = html.Div([
                     dbc.Row(
                         dbc.Col(
                             dbc.Tabs([
-                                dbc.Tab(dcc.Graph(id = 'hum-cluster-figure', style = {'height': '60vh'}), label = 'Humidity and Temperature Clustering')]))),
+                                dbc.Tab(dcc.Graph(id = 'hum-cluster-figure', style = {'height': '50vh'}), label = 'Humidity and Temperature Clustering')]))),
                     dbc.Row(
                         dbc.Col(
                             html.H3(children = "How it Works"), width = "auto"), justify = "center", style = {"margin-top": "5rem"}),
@@ -130,12 +130,19 @@ def update_daily_averages(n):
     ### Build figure
     daily_fig = go.Figure()
     daily_fig.add_trace(go.Scatter(x = df_daily['date'], y = df_daily['temp'],
-                                   line=dict(color='rgba(56,250,251,1)', width=2),
+                                   name = "Daily Average",
+                                   line=dict(color='rgba(247,168,1,0.65)', width=1),
+                                   text = [item.strftime('%b %d, %Y') for item in df_daily['date']],
+                                   hovertemplate = '''Date: %{text}<br>Avg: %{y:.2f}°F<extra></extra>'''))
+
+    daily_fig.add_trace(go.Scatter(x = df_daily['date'], y = df_daily['moving_avg'],
+                                   name = "10-Day SMA",
+                                   line=dict(color='rgba(56,250,251,1)', width=4),
                                    text = [item.strftime('%b %d, %Y') for item in df_daily['date']],
                                    hovertemplate = '''Date: %{text}<br>Avg: %{y:.2f}°F<extra></extra>'''))
 
     daily_fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white',
-                            showlegend = False, title_text = 'Average Daily Temperature',
+                            showlegend = True, title_text = 'Average Daily Temperature',
                             xaxis=dict(rangeslider=dict(visible = True), type = "date", showgrid = False),
                             yaxis=dict(gridcolor = '#444444'),
                             yaxis_title = "Temperature in °F")
