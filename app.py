@@ -69,9 +69,9 @@ app.layout = html.Div([
                     dbc.Row(
                         dbc.Col(
                             dbc.Tabs([
-                                dbc.Tab(dcc.Graph(id = 'daily-figure'), label = 'Average Daily Temp'),
-                                dbc.Tab(dcc.Graph(id = 'high-low-figure'), label = "Daily Highs and Lows"),
-                                dbc.Tab(dcc.Graph(id = 'weekly-figure'), label = "Last Seven Days")]))),
+                                dbc.Tab(dcc.Graph(id = 'daily-figure', style = {'height': '75vh'}), label = 'Average Daily Temp'),
+                                dbc.Tab(dcc.Graph(id = 'high-low-figure', style = {'height': '75vh'}), label = "Daily Highs and Lows"),
+                                dbc.Tab(dcc.Graph(id = 'weekly-figure', style = {'height': '75vh'}), label = "Last Seven Days")]))),
                     dbc.Row(
                         dbc.Col([
                             html.H3(children = "Records")], width = "auto"), justify = "center", style = {"margin-top": "2rem"}),
@@ -104,7 +104,7 @@ app.layout = html.Div([
                     dbc.Row(
                         dbc.Col(
                             dbc.Tabs([
-                                dbc.Tab(dcc.Graph(id = 'hum-cluster-figure'), label = 'Humidity and Temperature Clustering')]))),
+                                dbc.Tab(dcc.Graph(id = 'hum-cluster-figure', style = {'height': '75vh'}), label = 'Humidity and Temperature Clustering')]))),
                     dbc.Row(
                         dbc.Col(
                             html.H3(children = "How it Works"), width = "auto"), justify = "center", style = {"margin-top": "5rem"}),
