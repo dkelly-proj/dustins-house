@@ -179,12 +179,28 @@ def update_weekly(n):
     ### Collect Data
     df_wk = pd.read_sql(queries.weekly, con = engine)
 
+    ### Low
+    low = df_wk.loc[df_wk.temp == df_wk.temp.min()]
+
+    ### High
+    high = df_wk.loc[df_wk.temp == df_wk.temp.max()]
+
     ### Build Figure
     wk_fig = go.Figure()
     wk_fig.add_trace(go.Scatter(x = df_wk['date'], y = df_wk['temp'],
                                    line=dict(color='rgba(56,250,251,1)', width=2),
                                    text = [item.strftime('%b %d, %Y %H:%M%p') for item in df_wk['date']],
                                    hovertemplate = '''Date and Time: %{text}<br>Temp: %{y:.2f}°F<extra></extra>'''))
+
+    wk_fig.add_trace(go.Scatter(x = low['date'], y = low['temp'], mode = "markers",
+                                   marker=dict(color='rgba(52,152,219,1)', size = 25, symbol = 'arrow-down'),
+                                   text = [item.strftime('%b %d, %Y %H:%M%p') for item in low['date']],
+                                   hovertemplate = '''<b>Weekly Low</b><br>Date and Time: %{text}<br>Temp: %{y:.2f}°F<extra></extra>'''))
+
+    wk_fig.add_trace(go.Scatter(x = high['date'], y = high['temp'], mode = "markers",
+                                   marker=dict(color='rgba(231,76,60,1)', size = 25, symbol = 'arrow-up'),
+                                   text = [item.strftime('%b %d, %Y %H:%M%p') for item in high['date']],
+                                   hovertemplate = '''<b>Weekly High</b><br>Date and Time: %{text}<br>Temp: %{y:.2f}°F<extra></extra>'''))
 
     wk_fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white',
                             showlegend = False, title_text = 'Last Seven Days',
