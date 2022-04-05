@@ -104,7 +104,8 @@ app.layout = html.Div([
                     dbc.Row(
                         dbc.Col(
                             dbc.Tabs([
-                                dbc.Tab(dcc.Graph(id = 'hum-cluster-figure'), label = 'Humidity and Temperature Clustering')]))),
+                                dbc.Tab(dcc.Graph(id = 'hum-cluster-figure'), label = 'Humidity and Temperature Clustering'),
+                                dbc.Tab(dcc.Graph(id = 'hum-hist-figure'), label = 'Humidity Distribution')]))),
                     dbc.Row(
                         dbc.Col(
                             html.H3(children = "How it Works"), width = "auto"), justify = "center", style = {"margin-top": "5rem"}),
@@ -247,17 +248,18 @@ def update_record_high(n):
 
     return rh_temp, rh_date
 
-## Humidity Clustering
+## Humidity Testing
 @app.callback(Output('hum-cluster-figure', 'figure'),
+              Output('hum-hist-figure', 'figure'),
               Input('interval-component', 'n_intervals'))
-def update_hum_cluster(n):
+def update_hum_tests(n):
     ### Get Data
     df = (pd.read_sql(queries.hum_cluster, con = engine, parse_dates = 'date')
             .assign(ah_scaled = lambda x: StandardScaler().fit_transform(x.avg_humidity.array.reshape(-1,1)),
                     st_scaled = lambda x: StandardScaler().fit_transform(x.std_temp.array.reshape(-1,1)),
                     cluster = lambda x: KMeans(3).fit_predict(x[['ah_scaled','st_scaled']])))
 
-    ### Build figure
+    ### Clustering
     clusters = df.cluster.sort_values().unique()
     colors = ['rgba(56,250,251,1)', 'rgba(247,168,1,1)','rgba(0,255,117,1)']
     hovertemp = '''Date: %{text}<br>Avg Humidity: %{x:.2f}%<br>Std Dev of Temp: %{y:.2f}°F<extra></extra>'''
@@ -280,7 +282,21 @@ def update_hum_cluster(n):
                           yaxis = dict(gridcolor = '#444444'),
                           xaxis = dict(gridcolor = '#444444'))
 
-    return hum_fig
+    ### Histogram
+    hum_hist = go.Figure()
+
+    hum_hist.add_trace(go.Histogram(x = df.avg_humidity, marker_color = 'rgba(56,250,251,0.75)'))
+
+    hum_hist.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white',
+                           title_text = 'Distibution of Average Humidity', yaxis_title = "Count of Days",
+                           xaxis_title = "Average Humidity in %", yaxis = dict(gridcolor = '#444444'),
+                           xaxis = dict(gridcolor = '#444444'))
+
+    hum_hist.add_vline(x = df.avg_humidity.quantile(.75), line_width = 4, line_dash = "dot",
+                       line_color = 'rgba(247,168,1,1)',
+                       annotation_text = '75th Percentile = '+ str(df.avg_humidity.quantile(.75)))
+
+    return hum_fig, hum_hist
 
 if __name__ == '__main__':
    app.run_server(debug=True)
