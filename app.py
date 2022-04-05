@@ -98,14 +98,17 @@ app.layout = html.Div([
                         dbc.Col(
                             html.P("While building this dashboard, with admittedly zero meteorological knowledge, Dustin noticed that the temperature seemed to " +
                                    "fluctuate less on days with precipitation. Dustin has a hypothesis that humidity could be a proxy for precipitation, and that " +
-                                   "days with higher average humidity should also have a lower standard deviation of temperatures. At the end of January 2022 Dustin " +
-                                   "began collecting humidity data along with temperature data, and now plans to add visuals and tests to eventually reject or fail to " +
-                                   "reject the hypothesis stated above."), width = "auto"), justify = "center"),
+                                   "days with higher average humidity should also have a lower standard deviation of temperatures."), width = "auto"), justify = "center",
+                                   style = {'margin-bottom': "1rem"}),
+                    dbc.Row(
+                        dbc.Col(
+                            html.P(id = "writeup"), width = "auto"), justify = "center", style = {'margin-bottom': "2rem"}),
                     dbc.Row(
                         dbc.Col(
                             dbc.Tabs([
-                                dbc.Tab(dcc.Graph(id = 'hum-cluster-figure'), label = 'Humidity and Temperature Clustering'),
-                                dbc.Tab(dcc.Graph(id = 'hum-hist-figure'), label = 'Humidity Distribution')]))),
+                                dbc.Tab(dcc.Graph(id = 'hum-cluster-figure'), label = 'Clustering'),
+                                dbc.Tab(dcc.Graph(id = 'hum-hist-figure'), label = 'Humidity Distribution'),
+                                dbc.Tab(dcc.Graph(id = 'hum-comp-figure'), label = 'Variation Comparison')]))),
                     dbc.Row(
                         dbc.Col(
                             html.H3(children = "How it Works"), width = "auto"), justify = "center", style = {"margin-top": "5rem"}),
@@ -121,6 +124,8 @@ app.layout = html.Div([
                 dcc.Interval(id = 'interval-component', interval = 300 * 1000, n_intervals = 0)])
 
 # Live Updates
+hght = 625
+
 ## Daily Average Figure
 @app.callback(Output('daily-figure', 'figure'),
               Input('interval-component', 'n_intervals'))
@@ -146,7 +151,8 @@ def update_daily_averages(n):
                             showlegend = True, title_text = 'Average Daily Temperature',
                             xaxis=dict(rangeslider=dict(visible = True), type = "date", showgrid = False),
                             yaxis=dict(gridcolor = '#444444'),
-                            yaxis_title = "Temperature in °F")
+                            yaxis_title = "Temperature in °F",
+                            height = hght)
 
     return daily_fig
 
@@ -169,6 +175,7 @@ def update_daily_high_low(n):
                             yaxis_title = "Maximum Temperature in °F",
                             xaxis_title = "Minimum Temperature in °F",
                             yaxis = dict(gridcolor = '#444444'),
+                            height = hght,
                             xaxis = dict(gridcolor = '#444444'))
 
     return hl_fig
@@ -207,6 +214,7 @@ def update_weekly(n):
                             showlegend = False, title_text = 'Last Seven Days',
                             xaxis=dict(rangeslider=dict(visible = True), type = "date", showgrid = False),
                             yaxis=dict(gridcolor = '#444444'),
+                            height = hght,
                             yaxis_title = "Temperature in °F")
 
     return wk_fig
@@ -251,6 +259,8 @@ def update_record_high(n):
 ## Humidity Testing
 @app.callback(Output('hum-cluster-figure', 'figure'),
               Output('hum-hist-figure', 'figure'),
+              Output('hum-comp-figure', 'figure'),
+              Output('writeup', 'children'),
               Input('interval-component', 'n_intervals'))
 def update_hum_tests(n):
     ### Get Data
@@ -280,6 +290,7 @@ def update_hum_tests(n):
                           yaxis_title = "Standard Deviation of Temperature in °F",
                           xaxis_title = "Average Humidity in %",
                           yaxis = dict(gridcolor = '#444444'),
+                          height = hght,
                           xaxis = dict(gridcolor = '#444444'))
 
     ### Histogram
@@ -290,13 +301,51 @@ def update_hum_tests(n):
     hum_hist.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white',
                            title_text = 'Distibution of Average Humidity', yaxis_title = "Count of Days",
                            xaxis_title = "Average Humidity in %", yaxis = dict(gridcolor = '#444444'),
+                           height = hght,
                            xaxis = dict(gridcolor = '#444444'))
 
     hum_hist.add_vline(x = df.avg_humidity.quantile(.75), line_width = 4, line_dash = "dot",
                        line_color = 'rgba(247,168,1,1)',
                        annotation_text = '75th Percentile = '+ str(df.avg_humidity.quantile(.75)))
 
-    return hum_fig, hum_hist
+    ### Violin
+    test_fig = go.Figure()
+
+    df_test = df.assign(high = lambda x: ['High Humidity Days' if item >= x.avg_humidity.quantile(.75) else 'Normal' for item in x.avg_humidity],
+                        normal = 'All Days')
+
+    test_fig.add_trace(go.Violin(x = df_test.normal, y = df_test.std_temp,
+                                 name = 'All Days', box_visible = True,
+                                 meanline_visible = True,
+                                 line_color = 'rgba(56,250,251,1)',
+                                 points = 'all'))
+
+    test_fig.add_trace(go.Violin(x = df_test.loc[df_test.high == 'High Humidity Days']['high'],
+                                 y = df_test.loc[df_test.high == 'High Humidity Days']['std_temp'],
+                                 name = 'High Humidity Days', box_visible = True,
+                                 meanline_visible = True,
+                                 line_color = 'rgba(247,168,1,1)',
+                                 points = 'all'))
+
+    test_fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white',
+                           title_text = 'High Humidity Temperature Variation Compared to All Days',
+                           yaxis_title = "Standard Deviation of Temperature in °F",
+                           yaxis = dict(gridcolor = '#444444'),
+                           height = hght,
+                           xaxis = dict(showgrid = False))
+
+    ### writeup
+    count = len(df_test)
+    all_std = df_test.std_temp.mean()
+    per_75 = df_test.avg_humidity.quantile(.75)
+    count_high = len(df_test.loc[df_test.high == "High Humidity Days"])
+    high_std = df_test.loc[df_test.high == "High Humidity Days"]['std_temp'].mean()
+
+    writeup_text = (f'''There are currently {count} days with humidity data in the dataset, the average standard deviation of the temperature for those days is {all_std:.2f}°F''' +
+                    f''', and the 75th percentile of the humidity percentage is {per_75:.2f}%. There are {count_high} days with an average humidity at or above''' +
+                    f''' the 75th percentile, having an average standard deviation of the temperature of {high_std:.2f}°F.''')
+
+    return hum_fig, hum_hist, test_fig, writeup_text
 
 if __name__ == '__main__':
    app.run_server(debug=True)
